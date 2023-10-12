@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "572479542698",
+    "project_id": "appdomotica-7e915",
+    "storage_bucket": "appdomotica-7e915.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:572479542698:android:d001ee69da7155d83d07d3",
+        "android_client_info": {
+          "package_name": "com.example.appdomotica"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVpCD2GWI2DexxL68tRBmr70zo9gmSHv0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
