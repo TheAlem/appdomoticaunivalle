@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:appdomotica/animation/FadeAnimation.dart';
+import 'package:appdomotica/access/login_def.dart';
 
 class registerdef extends StatefulWidget {
   const registerdef({Key? key}) : super(key: key);
 
-  @override
+  @override   
   State<registerdef> createState() => _RegisterDefState();
 }
 
@@ -77,7 +80,6 @@ class _RegisterDefState extends State<registerdef> {
                   child: Form(
                     key: _formkey,
                     child: SingleChildScrollView(
-                      // Permite desplazamiento
                       child: Column(
                         children: <Widget>[
                           const SizedBox(height: 30),
@@ -110,11 +112,17 @@ class _RegisterDefState extends State<registerdef> {
                                           ? 'Ingresa tus apellidos'
                                           : null),
                                   _buildTextField(
-                                      _correoController,
-                                      "Correo Institucional",
-                                      (value) => value!.isEmpty
-                                          ? 'Ingresa tu correo'
-                                          : null),
+                                      _correoController, "Correo Institucional",
+                                      (value) {
+                                    if (value!.isEmpty) {
+                                      return 'Ingresa tu correo';
+                                    } else if (!RegExp(
+                                            r"^[a-zA-Z0-9.]+@est\.univalle\.edu$")
+                                        .hasMatch(value)) {
+                                      return 'Por favor, utiliza un correo institucional válido';
+                                    }
+                                    return null;
+                                  }),
                                   _buildTextField(
                                       _telefonoController,
                                       "Teléfono",
@@ -142,7 +150,7 @@ class _RegisterDefState extends State<registerdef> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 15),
                           FadeAnimation(
                             1.5,
                             Container(
@@ -161,58 +169,60 @@ class _RegisterDefState extends State<registerdef> {
                                   shadowColor: MaterialStateProperty.all(
                                       Colors.transparent),
                                 ),
-                                onPressed: () {
+                                onPressed: () async {
                                   if (_formkey.currentState!.validate()) {
-                                    // Procesar los datos
-                                  } else {
-                                    Fluttertoast.showToast(
-                                        msg:
-                                            "Por favor, rellena todos los campos.",
-                                        toastLength: Toast.LENGTH_SHORT,
-                                        gravity: ToastGravity.BOTTOM,
-                                        timeInSecForIosWeb: 1,
-                                        backgroundColor: Colors.red,
-                                        textColor: Colors.white,
-                                        fontSize: 16.0);
+                                    await registerUser(context);
                                   }
                                 },
-                                child: const Text(
-                                  "Regístrate",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                child: const Center(
+                                  child: Text(
+                                    "Registrarse",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              const Text("¿Ya tienes una cuenta? "),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text(
-                                  "Inicia sesión aquí",
-                                  style: TextStyle(
-                                    color: Colors.blue,
-                                    decoration: TextDecoration.underline,
+                          const SizedBox(
+                              height:
+                                  20), // Separación entre el botón y el texto.
+                          FadeAnimation(
+                            1.5,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  "¿Ya tienes una cuenta?",
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                                const SizedBox(width: 5),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => logindef()),
+                                    );
+                                  },
+                                  child: const Text(
+                                    "Iniciar sesión",
+                                    style: TextStyle(
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 10),
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -236,7 +246,7 @@ class _RegisterDefState extends State<registerdef> {
           hintText: hintText,
           hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
           border: InputBorder.none,
-          errorStyle: const TextStyle(fontSize: 0, height: 0),
+          errorStyle: const TextStyle(fontSize: 14),
           contentPadding: const EdgeInsets.only(top: 15, bottom: 5),
         ),
         validator: validator,
@@ -245,34 +255,81 @@ class _RegisterDefState extends State<registerdef> {
     );
   }
 
-  Widget _buildDropdownField(String hintText, List<String> items,
-      String? Function(String?)? validator) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey),
-        ),
+  Widget _buildDropdownField(
+      String label, List<String> items, String? Function(String?)? validator) {
+    return DropdownButtonFormField<String>(
+      value: _role,
+      decoration: const InputDecoration(
+        labelText: "Rol",
+        errorStyle: TextStyle(fontSize: 14),
       ),
-      child: DropdownButtonFormField<String>(
-        hint: Text(hintText, style: TextStyle(fontSize: 14)),
-        items: items.map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value, style: TextStyle(color: Colors.black)),
-          );
-        }).toList(),
-        onChanged: (value) {
-          _role = value;
-        },
-        validator: validator,
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          errorStyle: TextStyle(fontSize: 0, height: 0),
-          contentPadding: EdgeInsets.only(top: 15, bottom: 5),
-        ),
-      ),
+      hint: Text(label),
+      onChanged: (newValue) {
+        setState(() {
+          _role = newValue;
+        });
+      },
+      validator: validator,
+      items: items.map((item) {
+        return DropdownMenuItem(
+          child: Text(item),
+          value: item,
+        );
+      }).toList(),
     );
+  }
+
+  Future<void> registerUser(BuildContext context) async {
+    final FirebaseAuth _auth = FirebaseAuth.instance;
+    final CollectionReference users =
+        FirebaseFirestore.instance.collection('registro');
+
+    try {
+      final UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _correoController.text,
+        password: _contrasenaController.text,
+      );
+
+      await users.add({
+        'nombres': _nombresController.text,
+        'apellidos': _apellidosController.text,
+        'correo_institucional': _correoController.text,
+        'telefono': _telefonoController.text,
+        'rol': _role,
+        'uid': userCredential.user!.uid,
+      });
+
+      Fluttertoast.showToast(
+        msg: "Registro exitoso!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+
+      _nombresController.clear();
+      _apellidosController.clear();
+      _correoController.clear();
+      _telefonoController.clear();
+      _contrasenaController.clear();
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => logindef()),
+      );
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: e.toString(),
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
   }
 }
