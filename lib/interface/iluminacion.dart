@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:appdomotica/mqtt/mqtt_manager.dart';
-import 'package:mqtt_client/mqtt_client.dart';
 
 class IluminacionPage extends StatefulWidget {
   @override
@@ -12,13 +11,15 @@ class _IluminacionPageState extends State<IluminacionPage> {
   bool isSwitchedOn = false;
   List<HistorialItem> historial = [];
   MQTTManager? mqttManager;
+  
 
   @override
   void initState() {
     super.initState();
-    mqttManager = MQTTManager();
+    mqttManager = MQTTManager('jose_univalle/prueba');
     mqttManager?.connect().then((_) {
       mqttManager?.subscribe();
+      
     });
   }
 
@@ -46,7 +47,6 @@ class _IluminacionPageState extends State<IluminacionPage> {
       print(
           "El cliente MQTT no está conectado. No se puede enviar el mensaje.");
     }
-
   }
 
   @override

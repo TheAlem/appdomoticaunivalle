@@ -1,15 +1,15 @@
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
-class MQTTManager {
+  class MQTTManager {
   final String _host = 'broker.hivemq.com';
   final int _port = 1883;
   final String _clientId = 'clientId-UXSnbxzbEH';
-  final String _topic = 'jose_univalle/prueba';
+  final String _topic;
 
   late MqttServerClient _client;
 
-  MQTTManager() {
+  MQTTManager(this._topic) {
     _client = MqttServerClient(_host, _clientId);
     _client.port = _port;
     _client.keepAlivePeriod = 20;

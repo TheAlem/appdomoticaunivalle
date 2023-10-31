@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:appdomotica/mqtt/mqtt_manager.dart';
 
 class AccesoPage extends StatefulWidget {
   @override
@@ -9,23 +10,41 @@ class AccesoPage extends StatefulWidget {
 class _AccesoPageState extends State<AccesoPage> {
   bool isSwitchedOn = false;
   List<HistorialItem> historial = [];
+  MQTTManager? mqttManager;
+
+  @override
+  void initState() {
+    super.initState();
+    mqttManager = MQTTManager('jose_univalle/puerta');
+    mqttManager?.connect().then((_) {
+      mqttManager?.subscribe();
+    });
+  }
 
   void toggleSwitch() {
     setState(() {
       isSwitchedOn = !isSwitchedOn;
       historial.insert(
-        0,
-        HistorialItem(
-          dateTime: DateTime.now(),
-          estado: isSwitchedOn ? 'Desbloqueado' : 'Bloqueado',
-          nombre: 'Juan Perez',
-          rol: 'Docente',
-        ),
-      );
+          0,
+          HistorialItem(
+            dateTime: DateTime.now(),
+            estado: isSwitchedOn ? 'Desbloqueado' : 'Bloqueado',
+            nombre: 'Juan Perez',
+            rol: 'Docente',
+          ));
       if (historial.length > 4) {
         historial = historial.sublist(0, 4);
       }
     });
+
+    String mensaje = isSwitchedOn ? "1" : "0";
+
+    if (mqttManager?.isConnected() == true) {
+      mqttManager?.publish(mensaje);
+    } else {
+      print(
+          "El cliente MQTT no está conectado. No se puede enviar el mensaje.");
+    }
   }
 
   @override
