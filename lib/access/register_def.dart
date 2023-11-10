@@ -4,11 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:appdomotica/animation/FadeAnimation.dart';
 import 'package:appdomotica/access/login_def.dart';
+import 'package:appdomotica/access/firebase_auth_service.dart';
 
 class registerdef extends StatefulWidget {
   const registerdef({Key? key}) : super(key: key);
 
-  @override   
+  @override
   State<registerdef> createState() => _RegisterDefState();
 }
 
@@ -21,6 +22,60 @@ class _RegisterDefState extends State<registerdef> {
 
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
   String? _role;
+
+  final FirebaseAuthService _authService =
+      FirebaseAuthService(); // Instancia del Singleton
+
+  Future<void> registerUser(BuildContext context) async {
+    if (!_formkey.currentState!.validate()) return;
+
+    try {
+      UserCredential userCredential = await _authService.signUp(
+          _correoController.text, _contrasenaController.text);
+
+      await FirebaseFirestore.instance.collection('registro').add({
+        'nombres': _nombresController.text,
+        'apellidos': _apellidosController.text,
+        'correo_institucional': _correoController.text,
+        'telefono': _telefonoController.text,
+        'rol': _role,
+        'uid': userCredential.user!.uid,
+      });
+
+      Fluttertoast.showToast(
+        msg: "Registro exitoso!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+
+      // Limpia los controladores
+      _nombresController.clear();
+      _apellidosController.clear();
+      _correoController.clear();
+      _telefonoController.clear();
+      _contrasenaController.clear();
+
+      // Redirige al login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => logindef()),
+      );
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: e.toString(),
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -277,59 +332,5 @@ class _RegisterDefState extends State<registerdef> {
         );
       }).toList(),
     );
-  }
-
-  Future<void> registerUser(BuildContext context) async {
-    final FirebaseAuth _auth = FirebaseAuth.instance;
-    final CollectionReference users =
-        FirebaseFirestore.instance.collection('registro');
-
-    try {
-      final UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: _correoController.text,
-        password: _contrasenaController.text,
-      );
-
-      await users.add({
-        'nombres': _nombresController.text,
-        'apellidos': _apellidosController.text,
-        'correo_institucional': _correoController.text,
-        'telefono': _telefonoController.text,
-        'rol': _role,
-        'uid': userCredential.user!.uid,
-      });
-
-      Fluttertoast.showToast(
-        msg: "Registro exitoso!",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-
-      _nombresController.clear();
-      _apellidosController.clear();
-      _correoController.clear();
-      _telefonoController.clear();
-      _contrasenaController.clear();
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => logindef()),
-      );
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: e.toString(),
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    }
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:appdomotica/animation/FadeAnimation.dart';
 import 'package:appdomotica/access/list_interface.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:appdomotica/access/firebase_auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -18,6 +19,9 @@ class _LoginDefState extends State<logindef> {
   String? _password;
   String? _role;
   List<String> _roles = ['Estudiante', 'Docente', 'Administrador'];
+
+  final FirebaseAuthService _authService =
+      FirebaseAuthService(); // Instancia del Singleton
 
   void _tryLogin() async {
     if (_email == null ||
@@ -50,72 +54,16 @@ class _LoginDefState extends State<logindef> {
     }
 
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: _email!, password: _password!);
-
-      QuerySnapshot userDocs = await FirebaseFirestore.instance
-          .collection('registro')
-          .where('uid', isEqualTo: userCredential.user!.uid)
-          .get();
-
-      if (userDocs.docs.isNotEmpty) {
-        DocumentSnapshot userDoc = userDocs.docs.first;
-        Map<String, dynamic>? userData =
-            userDoc.data() as Map<String, dynamic>?;
-
-        String? dbRole = userData?['rol']?.trim().toLowerCase();
-        String? inputRole = _role?.trim().toLowerCase();
-
-        print("UID del usuario: ${userCredential.user!.uid}");
-        print("Rol en Firestore: $dbRole");
-        print("Rol seleccionado en la app: $inputRole");
-
-        if (dbRole == inputRole) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => listInterface()),
-          );
-        } else {
-          Fluttertoast.showToast(
-              msg: "El rol no coincide con el registrado.",
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.BOTTOM,
-              timeInSecForIosWeb: 1,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              fontSize: 16.0);
-        }
-      } else {
-        Fluttertoast.showToast(
-            msg: "Usuario no encontrado en Firestore.",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0);
-      }
-    } on FirebaseAuthException catch (e) {
-      String errorMessage = "";
-
-      if (e.code == 'user-not-found') {
-        errorMessage = "El correo electrónico no está registrado.";
-      } else if (e.code == 'wrong-password') {
-        errorMessage = "La contraseña es incorrecta.";
-      } else {
-        errorMessage = "Error de autenticación: ${e.message}";
-      }
+      UserCredential userCredential =
+          await _authService.signIn(_email!, _password!);
+      // Navegación a listInterface después del inicio de sesión exitoso
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const listInterface()),
+      );
+    } catch (e) {
       Fluttertoast.showToast(
-          msg: errorMessage,
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0);
-    } on Exception catch (e) {
-      Fluttertoast.showToast(
-          msg: "Error: $e",
+          msg: "Error de autenticación: ${e.toString()}",
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIosWeb: 1,
