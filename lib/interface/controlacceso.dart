@@ -30,7 +30,7 @@ class _AccesoPageState extends State<AccesoPage> {
             dateTime: DateTime.now(),
             estado: isSwitchedOn ? 'Desbloqueado' : 'Bloqueado',
             nombre: 'Juan Perez',
-            rol: 'Docente',
+            rol: 'Administrador',
           ));
       if (historial.length > 4) {
         historial = historial.sublist(0, 4);

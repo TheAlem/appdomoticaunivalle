@@ -1,7 +1,7 @@
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
-  class MQTTManager {
+class MQTTManager {
   final String _host = 'broker.hivemq.com';
   final int _port = 1883;
   final String _clientId = 'clientId-UXSnbxzbEH';
