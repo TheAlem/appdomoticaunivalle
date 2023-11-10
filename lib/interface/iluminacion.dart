@@ -6,7 +6,7 @@ class IluminacionPage extends StatefulWidget {
   @override
   _IluminacionPageState createState() => _IluminacionPageState();
 }
-
+  
 class _IluminacionPageState extends State<IluminacionPage> {
   bool isSwitchedOn = false;
   List<HistorialItem> historial = [];
@@ -23,6 +23,7 @@ class _IluminacionPageState extends State<IluminacionPage> {
     });
   }
 
+  
   void toggleSwitch() {
     setState(() {
       isSwitchedOn = !isSwitchedOn;
@@ -46,6 +47,12 @@ class _IluminacionPageState extends State<IluminacionPage> {
     } else {
       print(
           "El cliente MQTT no está conectado. No se puede enviar el mensaje.");
+    }
+
+    @override
+    void dispose() {
+      mqttManager?.disconnect();
+      super.dispose();
     }
   }
 

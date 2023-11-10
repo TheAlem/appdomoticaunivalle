@@ -28,8 +28,11 @@ class MQTTManager {
       _client.disconnect();
     }
 
+    // Revisar el estado de la conexión después de intentar conectar
     if (_client.connectionStatus!.state == MqttConnectionState.connected) {
       print('MQTT client connected.');
+      // Suscribirse al tópico después de conectar
+      subscribe();
     } else {
       print('ERROR: MQTT client connection failed - '
           'disconnecting, state is ${_client.connectionStatus!.state}');
@@ -56,15 +59,19 @@ class MQTTManager {
     return _client.connectionStatus!.state == MqttConnectionState.connected;
   }
 
-  void _onDisconnected() {
-    print('Disconnected from MQTT broker.');
-  }
-
   void _pong() {
     print('Ping response client callback invoked');
   }
 
   void _onSubscribed(String topic) {
     print('Subscription confirmed for topic $topic');
+  }
+
+  void _onDisconnected() {
+    print('Disconnected from MQTT broker.');
+  }
+
+  void disconnect() {
+    print("Disconnected from MQTT broker");
   }
 }

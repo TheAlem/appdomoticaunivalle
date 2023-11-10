@@ -5,7 +5,6 @@ import 'package:appdomotica/access/list_interface.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:appdomotica/access/firebase_auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class logindef extends StatefulWidget {
   const logindef({Key? key}) : super(key: key);

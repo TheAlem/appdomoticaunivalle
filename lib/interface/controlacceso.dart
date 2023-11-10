@@ -45,6 +45,11 @@ class _AccesoPageState extends State<AccesoPage> {
       print(
           "El cliente MQTT no está conectado. No se puede enviar el mensaje.");
     }
+    @override
+    void dispose() {
+      mqttManager?.disconnect();
+      super.dispose();
+    }
   }
 
   @override
