@@ -2,42 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:appdomotica/mqtt/mqtt_manager.dart';
 
-class IluminacionPage extends StatefulWidget {
+class PersianasPage extends StatefulWidget {
   @override
-  _IluminacionPageState createState() => _IluminacionPageState();
+  _PersianasPageState createState() => _PersianasPageState();
 }
 
-class _IluminacionPageState extends State<IluminacionPage> {
-  bool isSwitchedOn = false;
+class _PersianasPageState extends State<PersianasPage> {
+  bool arePersianasOpen = false;
   List<HistorialItem> historial = [];
   MQTTManager? mqttManager;
 
   @override
   void initState() {
     super.initState();
-    mqttManager = MQTTManager('jose_univalle/prueba');
+    mqttManager = MQTTManager('jose_univalle/persianas');
     mqttManager?.connect().then((_) {
       mqttManager?.subscribe();
     });
   }
 
-  void toggleSwitch() {
+  void togglePersianas() {
     setState(() {
-      isSwitchedOn = !isSwitchedOn;
+      arePersianasOpen = !arePersianasOpen;
       historial.insert(
           0,
           HistorialItem(
             dateTime: DateTime.now(),
-            estado: isSwitchedOn ? 'Encendido' : 'Apagado',
-            nombre: 'Juan Perez',
-            rol: 'Docente',
+            estado: arePersianasOpen ? 'Abiertas' : 'Cerradas',
+            nombre:'Diego', // Cambie a 'Usuario' ya que no se especificó un nombre.
+            rol: 'Docente', // Cambie a 'Residente' para este ejemplo.
           ));
       if (historial.length > 8) {
         historial = historial.sublist(0, 8);
       }
     });
 
-    String mensaje = isSwitchedOn ? "1" : "0";
+    String mensaje = arePersianasOpen ? "1" : "0";
 
     if (mqttManager?.isConnected() == true) {
       mqttManager?.publish(mensaje);
@@ -72,7 +72,7 @@ class _IluminacionPageState extends State<IluminacionPage> {
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Text(
-                    'Iluminación',
+                    'Persianas',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 48), // Placeholder to center the title
@@ -81,20 +81,22 @@ class _IluminacionPageState extends State<IluminacionPage> {
             ),
             SizedBox(height: 40),
             GestureDetector(
-              onTap: toggleSwitch,
+              onTap: togglePersianas,
               child: AnimatedSwitcher(
                 duration: Duration(milliseconds: 300),
                 child: Icon(
-                  isSwitchedOn ? Icons.lightbulb : Icons.lightbulb_outline,
-                  color: isSwitchedOn ? Colors.yellow : Colors.grey,
+                  arePersianasOpen
+                      ? Icons.vertical_align_top
+                      : Icons.vertical_align_bottom,
+                  color: arePersianasOpen ? Colors.blue : Colors.blueGrey,
                   size: 80,
-                  key: ValueKey<bool>(isSwitchedOn),
+                  key: ValueKey<bool>(arePersianasOpen),
                 ),
               ),
             ),
             SizedBox(height: 20),
             Text(
-              isSwitchedOn ? 'Encendido' : 'Apagado',
+              arePersianasOpen ? 'Abiertas' : 'Cerradas',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             Expanded(

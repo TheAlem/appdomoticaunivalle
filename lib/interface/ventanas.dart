@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:appdomotica/mqtt/mqtt_manager.dart';
 
-class IluminacionPage extends StatefulWidget {
+class VentanasPage extends StatefulWidget {
   @override
-  _IluminacionPageState createState() => _IluminacionPageState();
+  _VentanasPagueState createState() => _VentanasPagueState();
 }
 
-class _IluminacionPageState extends State<IluminacionPage> {
+class _VentanasPagueState extends State<VentanasPage> {
   bool isSwitchedOn = false;
   List<HistorialItem> historial = [];
   MQTTManager? mqttManager;
@@ -15,7 +15,7 @@ class _IluminacionPageState extends State<IluminacionPage> {
   @override
   void initState() {
     super.initState();
-    mqttManager = MQTTManager('jose_univalle/prueba');
+    mqttManager = MQTTManager('jose_univalle/ventanas');
     mqttManager?.connect().then((_) {
       mqttManager?.subscribe();
     });
@@ -28,9 +28,9 @@ class _IluminacionPageState extends State<IluminacionPage> {
           0,
           HistorialItem(
             dateTime: DateTime.now(),
-            estado: isSwitchedOn ? 'Encendido' : 'Apagado',
+            estado: isSwitchedOn ? 'Desbloqueado' : 'Bloqueado',
             nombre: 'Juan Perez',
-            rol: 'Docente',
+            rol: 'Administrador',
           ));
       if (historial.length > 8) {
         historial = historial.sublist(0, 8);
@@ -45,12 +45,11 @@ class _IluminacionPageState extends State<IluminacionPage> {
       print(
           "El cliente MQTT no está conectado. No se puede enviar el mensaje.");
     }
-  }
-
-  @override
-  void dispose() {
-    mqttManager?.disconnect();
-    super.dispose();
+    @override
+    void dispose() {
+      mqttManager?.disconnect();
+      super.dispose();
+    }
   }
 
   @override
@@ -72,21 +71,23 @@ class _IluminacionPageState extends State<IluminacionPage> {
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Text(
-                    'Iluminación',
+                    'Ventanas',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 48), // Placeholder to center the title
                 ],
               ),
             ),
-            SizedBox(height: 40),
+            SizedBox(height: 40), // Espacio adicional antes del ícono
             GestureDetector(
               onTap: toggleSwitch,
               child: AnimatedSwitcher(
                 duration: Duration(milliseconds: 300),
                 child: Icon(
-                  isSwitchedOn ? Icons.lightbulb : Icons.lightbulb_outline,
-                  color: isSwitchedOn ? Colors.yellow : Colors.grey,
+                  isSwitchedOn
+                      ? Icons.vertical_align_center
+                      : Icons.vertical_align_bottom,
+                  color: isSwitchedOn ? Colors.orange : Colors.blue,
                   size: 80,
                   key: ValueKey<bool>(isSwitchedOn),
                 ),
@@ -94,7 +95,7 @@ class _IluminacionPageState extends State<IluminacionPage> {
             ),
             SizedBox(height: 20),
             Text(
-              isSwitchedOn ? 'Encendido' : 'Apagado',
+              isSwitchedOn ? 'Desbloqueado' : 'Bloqueado',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             Expanded(

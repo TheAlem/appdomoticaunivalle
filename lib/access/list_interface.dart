@@ -1,3 +1,5 @@
+import 'package:appdomotica/interface/PersianasPage.dart';
+import 'package:appdomotica/interface/ventanas.dart';
 import 'package:flutter/material.dart';
 import 'package:appdomotica/interface/controlacceso.dart';
 import 'package:appdomotica/interface/iluminacion.dart';
@@ -42,6 +44,30 @@ class _listInterfaceState extends State<listInterface> {
                 );
               },
               child: const Text('Ir a Iluminación Page'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PersianasPage(),
+                  ),
+                );
+              },
+              child: const Text('Ir a Persianas'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VentanasPage(),
+                  ),
+                );
+              },
+              child: const Text('Ir a Ventanas'),
             ),
           ],
         ),
