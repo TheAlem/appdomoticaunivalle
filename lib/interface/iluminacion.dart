@@ -7,10 +7,15 @@ class IluminacionPage extends StatefulWidget {
   _IluminacionPageState createState() => _IluminacionPageState();
 }
 
-class _IluminacionPageState extends State<IluminacionPage> {
-  bool isSwitchedOn = false;
+class _IluminacionPageState extends State<IluminacionPage>
+    with SingleTickerProviderStateMixin {
+  double lightIntensity = 0;
   List<HistorialItem> historial = [];
   MQTTManager? mqttManager;
+  late AnimationController _animationController;
+  late Animation<Color?> _colorAnimation;
+  late Animation<double> _sizeAnimation;
+  bool isConnected = false;
 
   @override
   void initState() {
@@ -19,27 +24,62 @@ class _IluminacionPageState extends State<IluminacionPage> {
     mqttManager?.connect().then((_) {
       mqttManager?.subscribe();
     });
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _colorAnimation = ColorTween(
+      begin: Colors.grey,
+      end: Colors.yellow,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutQuad, // Suavizado de la animación
+    ));
+
+    _sizeAnimation = Tween<double>(
+      begin: 40.0,
+      end: 90.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.elasticInOut, // Efecto elástico
+    ));
   }
 
-  void toggleSwitch() {
+  void handleMqttConnected() {
     setState(() {
-      isSwitchedOn = !isSwitchedOn;
+      isConnected = true;
+    });
+  }
+
+  void handleMqttDisconnected() {
+    setState(() {
+      isConnected = false;
+    });
+  }
+
+  void updateLightIntensity(double intensity) {
+    setState(() {
+      lightIntensity = intensity;
       historial.insert(
-          0,
-          HistorialItem(
-            dateTime: DateTime.now(),
-            estado: isSwitchedOn ? 'Encendido' : 'Apagado',
-            nombre: 'Juan Perez',
-            rol: 'Docente',
-          ));
-      if (historial.length > 8) {
-        historial = historial.sublist(0, 8);
+        0,
+        HistorialItem(
+          dateTime: DateTime.now(),
+          estado: '${(lightIntensity * 100).toInt()}% de Intensidad',
+          nombre: 'Juan Perez',
+          rol: 'Docente',
+        ),
+      );
+      if (historial.length > 7) {
+        historial = historial.sublist(0, 7);
       }
     });
 
-    String mensaje = isSwitchedOn ? "1" : "0";
+    _animationController.animateTo(lightIntensity);
 
-    if (mqttManager?.isConnected() == true) {
+    String mensaje = intensity.toString();
+    if (isConnected) {
       mqttManager?.publish(mensaje);
     } else {
       print(
@@ -50,6 +90,7 @@ class _IluminacionPageState extends State<IluminacionPage> {
   @override
   void dispose() {
     mqttManager?.disconnect();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -61,61 +102,88 @@ class _IluminacionPageState extends State<IluminacionPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, size: 24.0),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Text(
-                    'Iluminación',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 48), // Placeholder to center the title
-                ],
-              ),
-            ),
+            buildTopBar(context),
             SizedBox(height: 40),
-            GestureDetector(
-              onTap: toggleSwitch,
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 300),
-                child: Icon(
-                  isSwitchedOn ? Icons.lightbulb : Icons.lightbulb_outline,
-                  color: isSwitchedOn ? Colors.yellow : Colors.grey,
-                  size: 80,
-                  key: ValueKey<bool>(isSwitchedOn),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            Text(
-              isSwitchedOn ? 'Encendido' : 'Apagado',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: historial.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: Icon(
-                      Icons.history,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    title: Text(historial[index].nombre),
-                    subtitle: Text(
-                      '${DateFormat('dd/MM/yyyy HH:mm').format(historial[index].dateTime)} - ${historial[index].estado}',
-                    ),
-                  );
-                },
-              ),
-            ),
+            buildLightBulbIcon(),
+            buildLightIntensitySlider(),
+            buildIntensityText(),
+            buildHistoryList(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildTopBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back, size: 24.0),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          Text(
+            'Iluminación',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          Icon(
+            isConnected ? Icons.signal_wifi_4_bar : Icons.signal_wifi_off,
+            color: isConnected ? Colors.green : Colors.red,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildLightBulbIcon() {
+    return GestureDetector(
+      onTap: () => updateLightIntensity(lightIntensity == 0 ? 1.0 : 0),
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Icon(
+            Icons.lightbulb_outline,
+            color: _colorAnimation.value,
+            size: _sizeAnimation.value,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget buildLightIntensitySlider() {
+    return Slider(
+      value: lightIntensity,
+      onChanged: (newIntensity) => updateLightIntensity(newIntensity),
+      min: 0,
+      max: 1,
+      divisions: 100,
+      label: '${(lightIntensity * 100).toInt()}%',
+    );
+  }
+
+  Widget buildIntensityText() {
+    return Text(
+      '${(lightIntensity * 100).toInt()}% de Intensidad',
+      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget buildHistoryList() {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: historial.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: Icon(Icons.history, color: Theme.of(context).primaryColor),
+            title: Text(historial[index].nombre),
+            subtitle: Text(
+              '${DateFormat('dd/MM/yyyy HH:mm').format(historial[index].dateTime)} - ${historial[index].estado}',
+            ),
+          );
+        },
       ),
     );
   }

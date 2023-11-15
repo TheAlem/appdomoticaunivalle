@@ -13,8 +13,7 @@ void main() async {
   );
 
   // Inicializar y conectar MQTTManager
-  final mqttManager = MQTTManager(
-      "tu/topico/aqui"); // Asegúrate de reemplazar "tu/topico/aqui" con tu tópico real
+  final mqttManager = MQTTManager(''); 
   await mqttManager.connect();
 
   // Iniciar la aplicación Flutter
@@ -29,7 +28,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home:
-          logindef(), // Asegúrate de que 'LoginDef' sea el widget correcto para iniciar tu aplicación
+          logindef(),
     );
   }
 }
