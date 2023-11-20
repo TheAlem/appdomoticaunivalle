@@ -120,7 +120,6 @@ class _AccesoPageState extends State<AccesoPage> {
   }
 }
 
-
 class HistorialItem {
   final DateTime dateTime;
   final String estado;
