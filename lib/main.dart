@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:appdomotica/access/login_def.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:appdomotica/access/def_login.dart';
 import '/mqtt/mqtt_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
   // Inicializar y conectar MQTTManager
-  final mqttManager = MQTTManager(''); 
+  final mqttManager = MQTTManager("");
   await mqttManager.connect();
 
   // Iniciar la aplicación Flutter
@@ -27,8 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home:
-          logindef(),
+      home: LoginDef(),
     );
   }
 }

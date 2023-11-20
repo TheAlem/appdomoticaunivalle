@@ -1,75 +1,116 @@
-import 'package:appdomotica/access/register_def.dart';
+import 'package:appdomotica/interface/interface_list_control.dart';
+import 'package:appdomotica/access/def_register.dart';
 import 'package:flutter/material.dart';
 import 'package:appdomotica/animation/FadeAnimation.dart';
-import 'package:appdomotica/access/list_interface.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:appdomotica/access/firebase_auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:bcrypt/bcrypt.dart';
+import 'package:mongo_dart/mongo_dart.dart' hide State;
 
-class logindef extends StatefulWidget {
-  const logindef({Key? key}) : super(key: key);
+class LoginDef extends StatefulWidget {
+  const LoginDef({Key? key}) : super(key: key);
 
   @override
-  State<logindef> createState() => _LoginDefState();
+  _LoginDefState createState() => _LoginDefState();
 }
 
-class _LoginDefState extends State<logindef> {
-  String? _email;
-  String? _password;
+class _LoginDefState extends State<LoginDef> {
+  final TextEditingController _correoController = TextEditingController();
+  final TextEditingController _contrasenaController = TextEditingController();
   String? _role;
-  List<String> _roles = ['Estudiante', 'Docente', 'Administrador'];
+  List<String> _rolesValidos = ['Estudiante', 'Docente', 'Administrador'];
+  late Db db;
+  late DbCollection usersCollection;
 
-  final FirebaseAuthService _authService =
-      FirebaseAuthService(); // Instancia del Singleton
+  @override
+  void initState() {
+    super.initState();
+    _connectToDatabase();
+  }
+
+  Future<void> _connectToDatabase() async {
+    db = await Db.create("mongodb://sunset:1234@144.22.36.59:27017/sunset");
+    await db.open();
+    usersCollection = db.collection('registro');
+  }
 
   void _tryLogin() async {
-    if (_email == null ||
-        _email!.isEmpty ||
-        _password == null ||
-        _password!.isEmpty ||
-        _role == null) {
+    String email = _correoController.text.trim();
+    String password = _contrasenaController.text;
+
+    if (email.isEmpty || password.isEmpty || _role == null) {
       Fluttertoast.showToast(
-          msg: "Por favor, rellena todos los campos.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0);
+        msg: "Por favor, rellena todos los campos.",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
       return;
     }
 
-    if (!RegExp(r"^[a-zA-Z0-9.]+@est\.univalle\.edu$").hasMatch(_email!)) {
+    if (!RegExp(r"^[a-zA-Z0-9._]+@est\.univalle\.edu$").hasMatch(email)) {
       Fluttertoast.showToast(
-          msg:
-              "Por favor, utiliza un correo válido del dominio @est.univalle.edu",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0);
+        msg:
+            "Por favor, utiliza un correo válido del dominio @est.univalle.edu",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
       return;
     }
 
     try {
-      UserCredential userCredential =
-          await _authService.signIn(_email!, _password!);
-      // Navegación a listInterface después del inicio de sesión exitoso
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const listInterface()),
-      );
-    } catch (e) {
-      Fluttertoast.showToast(
-          msg: "Error de autenticación: ${e.toString()}",
+      final user = await usersCollection
+          .findOne(where.eq('correo_institucional', email).eq('rol', _role));
+
+      if (user != null && BCrypt.checkpw(password, user['contraseña'])) {
+        Fluttertoast.showToast(
+          msg: "Inicio de sesión exitoso",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => const listInterface()));
+      } else {
+        Fluttertoast.showToast(
+          msg: "Correo, contraseña o rol incorrectos",
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIosWeb: 1,
           backgroundColor: Colors.red,
           textColor: Colors.white,
-          fontSize: 16.0);
+          fontSize: 16.0,
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error de autenticación: ${e.toString()}",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
     }
+  }
+
+  @override
+  void dispose() {
+    db.close();
+    _correoController.dispose();
+    _contrasenaController.dispose();
+    super.dispose();
   }
 
   @override
@@ -100,7 +141,7 @@ class _LoginDefState extends State<logindef> {
                     SizedBox(
                       height: 120,
                       width: 120,
-                      child: Image.asset('assets/img/univalle.png'),
+                      child: Image.asset('assets/images/image_univalle.png'),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -154,24 +195,24 @@ class _LoginDefState extends State<logindef> {
                                 ),
                               ),
                               child: TextField(
+                                controller: _correoController,
                                 decoration: const InputDecoration(
                                   hintText: "Correo",
                                   hintStyle: TextStyle(color: Colors.grey),
                                   border: InputBorder.none,
                                 ),
-                                onChanged: (value) => _email = value,
                               ),
                             ),
                             Container(
                               padding: const EdgeInsets.all(10),
                               child: TextField(
+                                controller: _contrasenaController,
                                 obscureText: true,
                                 decoration: const InputDecoration(
                                   hintText: "Contraseña",
                                   hintStyle: TextStyle(color: Colors.grey),
                                   border: InputBorder.none,
                                 ),
-                                onChanged: (value) => _password = value,
                               ),
                             ),
                             Container(
@@ -179,7 +220,7 @@ class _LoginDefState extends State<logindef> {
                               child: DropdownButtonFormField<String>(
                                 hint: const Text('Seleccione su rol'),
                                 value: _role,
-                                items: _roles.map((String value) {
+                                items: _rolesValidos.map((String value) {
                                   return DropdownMenuItem<String>(
                                     value: value,
                                     child: Text(value),
@@ -233,14 +274,6 @@ class _LoginDefState extends State<logindef> {
                     const SizedBox(height: 20),
                     FadeAnimation(
                       1.5,
-                      const Text(
-                        "Olvidaste tu contraseña?",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    FadeAnimation(
-                      1.5,
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -254,7 +287,7 @@ class _LoginDefState extends State<logindef> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => registerdef()),
+                                    builder: (context) => const registerdef()),
                               );
                             },
                             child: const Text(

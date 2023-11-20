@@ -161,6 +161,9 @@ class _IluminacionPageState extends State<IluminacionPage>
       max: 1,
       divisions: 100,
       label: '${(lightIntensity * 100).toInt()}%',
+      activeColor: Color.fromARGB(255, 153, 24, 24),
+      inactiveColor: Color.fromARGB(83, 133, 37, 37),
+      thumbColor: Color.fromARGB(255, 153, 24, 24),
     );
   }
 

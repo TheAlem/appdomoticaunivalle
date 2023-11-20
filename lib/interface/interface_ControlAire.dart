@@ -19,7 +19,7 @@ class _AirConditionerControlScreenState
   @override
   void initState() {
     super.initState();
-    mqttManager = MQTTManager('jose_univalle/ac'); // Tópico específico para AC
+    mqttManager = MQTTManager('jose_univalle/ac'); 
     mqttManager?.connect().then((_) {
       if (mqttManager?.isConnected() ?? false) {
         setState(() {
