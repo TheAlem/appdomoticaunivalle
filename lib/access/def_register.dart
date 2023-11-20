@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:appdomotica/animation/FadeAnimation.dart';
-import 'package:appdomotica/access/login_def.dart';
-import 'package:appdomotica/access/firebase_auth_service.dart';
+import 'package:appdomotica/access/def_login.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:bcrypt/bcrypt.dart';
+import 'package:mongo_dart/mongo_dart.dart' hide State hide Center;
 
 class registerdef extends StatefulWidget {
   const registerdef({Key? key}) : super(key: key);
 
   @override
-  State<registerdef> createState() => _RegisterDefState();
+  _RegisterDefState createState() => _RegisterDefState();
 }
 
 class _RegisterDefState extends State<registerdef> {
@@ -23,23 +22,38 @@ class _RegisterDefState extends State<registerdef> {
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
   String? _role;
 
-  final FirebaseAuthService _authService =
-      FirebaseAuthService(); // Instancia del Singleton
+  Db? db;
+  DbCollection? collection;
+
+  void initState() {
+    super.initState();
+    _connectToDatabase();
+  }
+
+  Future<void> _connectToDatabase() async {
+    db = await Db.create('mongodb://sunset:1234@144.22.36.59:27017/sunset');
+    await db!.open();
+    collection = db!.collection('registro');
+  }
+
+  String hashPassword(String password) {
+    final hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+    return hashedPassword;
+  }
 
   Future<void> registerUser(BuildContext context) async {
     if (!_formkey.currentState!.validate()) return;
 
-    try {
-      UserCredential userCredential = await _authService.signUp(
-          _correoController.text, _contrasenaController.text);
+    String hashedPassword = hashPassword(_contrasenaController.text);
 
-      await FirebaseFirestore.instance.collection('registro').add({
+    try {
+      await collection!.insertOne({
         'nombres': _nombresController.text,
         'apellidos': _apellidosController.text,
         'correo_institucional': _correoController.text,
         'telefono': _telefonoController.text,
+        'contraseña': hashedPassword,
         'rol': _role,
-        'uid': userCredential.user!.uid,
       });
 
       Fluttertoast.showToast(
@@ -52,17 +66,9 @@ class _RegisterDefState extends State<registerdef> {
         fontSize: 16.0,
       );
 
-      // Limpia los controladores
-      _nombresController.clear();
-      _apellidosController.clear();
-      _correoController.clear();
-      _telefonoController.clear();
-      _contrasenaController.clear();
-
-      // Redirige al login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => logindef()),
+        MaterialPageRoute(builder: (context) => LoginDef()),
       );
     } catch (e) {
       Fluttertoast.showToast(
@@ -105,7 +111,7 @@ class _RegisterDefState extends State<registerdef> {
                     SizedBox(
                       height: 120,
                       width: 120,
-                      child: Image.asset('assets/img/univalle.png'),
+                      child: Image.asset('assets/images/univalle.png'),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -258,7 +264,7 @@ class _RegisterDefState extends State<registerdef> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) => logindef()),
+                                          builder: (context) => LoginDef()),
                                     );
                                   },
                                   child: const Text(
