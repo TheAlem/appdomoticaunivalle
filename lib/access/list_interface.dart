@@ -1,3 +1,4 @@
+import 'package:appdomotica/interface/ControlAire.dart';
 import 'package:appdomotica/interface/PersianasPage.dart';
 import 'package:appdomotica/interface/ventanas.dart';
 import 'package:flutter/material.dart';
@@ -68,6 +69,18 @@ class _listInterfaceState extends State<listInterface> {
                 );
               },
               child: const Text('Ir a Ventanas'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AirConditionerControlScreen(),
+                  ),
+                );
+              },
+              child: const Text('Ir a ControlAire'),
             ),
           ],
         ),
