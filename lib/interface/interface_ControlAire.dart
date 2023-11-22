@@ -85,10 +85,13 @@ class _AirConditionerControlScreenState
             icon: Icon(Icons.arrow_back, size: 24.0),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          Text(
+          const Spacer(),
+          const Text(
             'Aire Acondicionado',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
+          const SizedBox(width: 20),
+          const Spacer(),
           Icon(
             isConnected ? Icons.signal_wifi_4_bar : Icons.signal_wifi_off,
             color: isConnected ? Colors.green : Colors.red,

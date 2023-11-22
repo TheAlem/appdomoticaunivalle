@@ -23,7 +23,11 @@ class _IluminacionPageState extends State<IluminacionPage>
     mqttManager = MQTTManager('jose_univalle/prueba');
     mqttManager?.connect().then((_) {
       mqttManager?.subscribe();
+      handleMqttConnected(); // Llamar cuando se conecte
+    }).catchError((error) {
+        handleMqttDisconnected(); // Llamar en caso de error
     });
+  
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -60,6 +64,7 @@ class _IluminacionPageState extends State<IluminacionPage>
   }
 
   void updateLightIntensity(double intensity) {
+    int brightness = (intensity * 255).toInt(); // Convierte de 0 a 1 a 0 a 255
     setState(() {
       lightIntensity = intensity;
       historial.insert(
@@ -78,7 +83,7 @@ class _IluminacionPageState extends State<IluminacionPage>
 
     _animationController.animateTo(lightIntensity);
 
-    String mensaje = intensity.toString();
+    String mensaje = brightness.toString(); // Enviar el valor entero
     if (isConnected) {
       mqttManager?.publish(mensaje);
     } else {
@@ -124,10 +129,13 @@ class _IluminacionPageState extends State<IluminacionPage>
             icon: Icon(Icons.arrow_back, size: 24.0),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          Text(
+          const Spacer(),
+          const Text(
             'Iluminación',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
+          const SizedBox(width: 20),
+          const Spacer(),
           Icon(
             isConnected ? Icons.signal_wifi_4_bar : Icons.signal_wifi_off,
             color: isConnected ? Colors.green : Colors.red,

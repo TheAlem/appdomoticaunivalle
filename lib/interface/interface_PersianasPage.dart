@@ -11,6 +11,7 @@ class _PersianasPageState extends State<PersianasPage> {
   bool arePersianasOpen = false;
   List<HistorialItem> historial = [];
   MQTTManager? mqttManager;
+  bool isConnected = false;
 
   @override
   void initState() {
@@ -18,6 +19,13 @@ class _PersianasPageState extends State<PersianasPage> {
     mqttManager = MQTTManager('jose_univalle/persianas');
     mqttManager?.connect().then((_) {
       mqttManager?.subscribe();
+      setState(() {
+        isConnected = true;
+      });
+    }).catchError((_) {
+      setState(() {
+        isConnected = false;
+      });
     });
   }
 
@@ -25,20 +33,20 @@ class _PersianasPageState extends State<PersianasPage> {
     setState(() {
       arePersianasOpen = !arePersianasOpen;
       historial.insert(
-          0,
-          HistorialItem(
-            dateTime: DateTime.now(),
-            estado: arePersianasOpen ? 'Abiertas' : 'Cerradas',
-            nombre:'Diego', // Cambie a 'Usuario' ya que no se especificó un nombre.
-            rol: 'Docente', // Cambie a 'Residente' para este ejemplo.
-          ));
+        0,
+        HistorialItem(
+          dateTime: DateTime.now(),
+          estado: arePersianasOpen ? 'Abiertas' : 'Cerradas',
+          nombre: 'Usuario',
+          rol: 'Residente',
+        ),
+      );
       if (historial.length > 8) {
         historial = historial.sublist(0, 8);
       }
     });
 
     String mensaje = arePersianasOpen ? "1" : "0";
-
     if (mqttManager?.isConnected() == true) {
       mqttManager?.publish(mensaje);
     } else {
@@ -61,63 +69,83 @@ class _PersianasPageState extends State<PersianasPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, size: 24.0),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Text(
-                    'Persianas',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 48), // Placeholder to center the title
-                ],
-              ),
-            ),
+            buildTopBar(),
             SizedBox(height: 40),
-            GestureDetector(
-              onTap: togglePersianas,
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 300),
-                child: Icon(
-                  arePersianasOpen
-                      ? Icons.vertical_align_top
-                      : Icons.vertical_align_bottom,
-                  color: arePersianasOpen ? Colors.blue : Colors.blueGrey,
-                  size: 80,
-                  key: ValueKey<bool>(arePersianasOpen),
-                ),
-              ),
-            ),
+            buildPersianasControl(),
             SizedBox(height: 20),
-            Text(
-              arePersianasOpen ? 'Abiertas' : 'Cerradas',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: historial.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: Icon(
-                      Icons.history,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    title: Text(historial[index].nombre),
-                    subtitle: Text(
-                      '${DateFormat('dd/MM/yyyy HH:mm').format(historial[index].dateTime)} - ${historial[index].estado}',
-                    ),
-                  );
-                },
-              ),
-            ),
+            buildPersianasStateText(),
+            buildHistorialList(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment
+            .center, // Asegura que los elementos estén centrados en el eje principal
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back, size: 24.0),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const Spacer(), // Espacio a la izquierda
+          const Text(
+            'Persianas',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 20),
+          const Spacer(), // Espacio a la derecha
+          Icon(
+            isConnected ? Icons.signal_wifi_4_bar : Icons.signal_wifi_off,
+            color: isConnected ? Colors.green : Colors.red,
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget buildPersianasControl() {
+    return GestureDetector(
+      onTap: togglePersianas,
+      child: AnimatedSwitcher(
+        duration: Duration(milliseconds: 300),
+        child: Icon(
+          arePersianasOpen
+              ? Icons.vertical_align_top
+              : Icons.vertical_align_bottom,
+          color: arePersianasOpen ? Colors.blue : Colors.blueGrey,
+          size: 80,
+          key: ValueKey<bool>(arePersianasOpen),
+        ),
+      ),
+    );
+  }
+
+  Widget buildPersianasStateText() {
+    return Text(
+      arePersianasOpen ? 'Abiertas' : 'Cerradas',
+      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget buildHistorialList() {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: historial.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: Icon(Icons.history, color: Theme.of(context).primaryColor),
+            title: Text(historial[index].nombre),
+            subtitle: Text(
+              '${DateFormat('dd/MM/yyyy HH:mm').format(historial[index].dateTime)} - ${historial[index].estado}',
+            ),
+          );
+        },
       ),
     );
   }
