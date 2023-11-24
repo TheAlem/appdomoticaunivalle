@@ -46,7 +46,7 @@ class _VentanasPageState extends State<VentanasPage> {
       }
     });
 
-    String mensaje = isSwitchedOn ? "258" : "257";
+    String mensaje = isSwitchedOn ? "1" : "0";
     if (mqttManager?.isConnected() == true) {
       mqttManager?.publish(mensaje);
     } else {

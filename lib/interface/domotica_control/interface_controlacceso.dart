@@ -46,7 +46,7 @@ class _AccesoPageState extends State<AccesoPage> {
       }
     });
 
-    String mensaje = isSwitchedOn ? "260" : "259";
+    String mensaje = isSwitchedOn ? "1" : "0";
     if (mqttManager?.isConnected() == true) {
       mqttManager?.publish(mensaje);
     } else {
