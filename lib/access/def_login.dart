@@ -1,9 +1,11 @@
-import 'package:appdomotica/interface/interface_list_control.dart';
+import 'package:appdomotica/interface/list_control/interface_list_control.dart';
 import 'package:appdomotica/access/def_register.dart';
 import 'package:flutter/material.dart';
 import 'package:appdomotica/animation/FadeAnimation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:bcrypt/bcrypt.dart';
+import 'package:appdomotica/access/def_session_manager.dart';
+import 'package:appdomotica/access/user_profile/user_session.dart';
 import 'package:mongo_dart/mongo_dart.dart' hide State;
 
 class LoginDef extends StatefulWidget {
@@ -79,6 +81,12 @@ class _LoginDefState extends State<LoginDef> {
           fontSize: 16.0,
         );
 
+        // Guardar correo
+        UserSession.setUserEmail(email);
+
+        // Guarda el estado de la sesión como iniciada
+        await SessionManager.saveLoginState(true);
+
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (context) => const listInterface()));
       } else {
@@ -141,7 +149,7 @@ class _LoginDefState extends State<LoginDef> {
                     SizedBox(
                       height: 120,
                       width: 120,
-                      child: Image.asset('assets/images/univalle.png'),
+                      child: Image.asset('assets/images/image_univalle.png'),
                     ),
                   ),
                   const SizedBox(height: 10),

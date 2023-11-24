@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:appdomotica/interface/interface_control_iluminacion.dart';
-import 'package:appdomotica/interface/interface_control_acceso.dart';
-import 'package:appdomotica/interface/interface_control_persianas.dart';
-import 'package:appdomotica/interface/interface_control_ventanas.dart';
+import 'package:appdomotica/interface/domotica_control/interface_control_iluminacion.dart';
+import 'package:appdomotica/interface/domotica_control/interface_control_acceso.dart';
+import 'package:appdomotica/interface/domotica_control/interface_control_persianas.dart';
+import 'package:appdomotica/interface/domotica_control/interface_control_ventanas.dart';
+import 'package:appdomotica/access/user_profile/user_details.dart';
+import 'package:appdomotica/access/user_profile/user_session.dart';
 
 class listInterface extends StatefulWidget {
   const listInterface({Key? key}) : super(key: key);
@@ -16,25 +18,25 @@ class _listInterfaceState extends State<listInterface> {
     {
       'title': 'Luz',
       'description': 'Control de Iluminación',
-      'image': 'assets/images/luz.png',
+      'image': 'assets/images/image_luz.png',
       'page': IluminacionPage(),
     },
     {
       'title': 'Acceso',
       'description': 'Control de Acceso',
-      'image': 'assets/images/controldeacceso.png',
+      'image': 'assets/images/image_controldeacceso.png',
       'page': AccesoPage(),
     },
     {
       'title': 'Persiana',
       'description': 'Control de Persiana',
-      'image': 'assets/images/persiana.png',
+      'image': 'assets/images/image_persiana.png',
       'page': PersianasPage(),
     },
     {
       'title': 'Ventana',
       'description': 'Control de Ventana',
-      'image': 'assets/images/ventana.png',
+      'image': 'assets/images/image_ventana.png',
       'page': VentanasPage(),
     },
   ];
@@ -43,9 +45,26 @@ class _listInterfaceState extends State<listInterface> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Univalle Domótica'),
-        backgroundColor: const Color.fromARGB(228, 82, 2, 2),
-      ),
+          title: const Text('Univalle Domótica'),
+          backgroundColor: const Color.fromARGB(228, 82, 2, 2),
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.account_circle),
+              onPressed: () {
+                // Obtener el correo electrónico del usuario actual
+                String currentUserEmail = UserSession.getUserEmail();
+
+                // Navegar a UserDetailsPage
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        UserDetailsPage(userEmail: currentUserEmail),
+                  ),
+                );
+              },
+            ),
+          ]),
       body: GridView.builder(
         padding: const EdgeInsets.all(8.0),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -63,6 +82,8 @@ class _listInterfaceState extends State<listInterface> {
             ),
             child: Card(
               color: const Color.fromARGB(228, 82, 2, 2),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[

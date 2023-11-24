@@ -111,7 +111,7 @@ class _RegisterDefState extends State<registerdef> {
                     SizedBox(
                       height: 120,
                       width: 120,
-                      child: Image.asset('assets/images/univalle.png'),
+                      child: Image.asset('assets/images/image_univalle.png'),
                     ),
                   ),
                   const SizedBox(height: 10),
