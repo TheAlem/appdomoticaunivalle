@@ -16,7 +16,7 @@ class _VentanasPageState extends State<VentanasPage> {
   @override
   void initState() {
     super.initState();
-    mqttManager = MQTTManager('jose_univalle/ventanas');
+    mqttManager = MQTTManager('jose_univalle/ventana');
     mqttManager?.connect().then((_) {
       mqttManager?.subscribe();
       setState(() {
@@ -36,7 +36,7 @@ class _VentanasPageState extends State<VentanasPage> {
         0,
         HistorialItem(
           dateTime: DateTime.now(),
-          estado: isSwitchedOn ? 'Desbloqueado' : 'Bloqueado',
+          estado: isSwitchedOn ? 'Desbloqueadox' : 'Bloqueado',
           nombre: 'Juan Perez',
           rol: 'Administrador',
         ),
@@ -46,7 +46,7 @@ class _VentanasPageState extends State<VentanasPage> {
       }
     });
 
-    String mensaje = isSwitchedOn ? "1" : "0";
+    String mensaje = isSwitchedOn ? "258" : "257";
     if (mqttManager?.isConnected() == true) {
       mqttManager?.publish(mensaje);
     } else {
