@@ -81,8 +81,8 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   if (userDetails != null) ...[
-                    _dataTile('Nombres', userDetails?['nombres']),
-                    _dataTile('Apellidos', userDetails?['apellidos']),
+                    _dataTile('Nombre', userDetails?['nombres']),
+                    _dataTile('Apellido', userDetails?['apellidos']),
                     _dataTile('Correo Institucional',
                         userDetails?['correo_institucional']),
                     _dataTile('Teléfono', userDetails?['telefono']),
@@ -97,6 +97,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                       child: const Text('Cerrar Sesión'),
                       style: ElevatedButton.styleFrom(
                         primary: const Color.fromARGB(228, 82, 2, 2),
+                        onPrimary: const Color.fromARGB(255, 255, 255, 255),
                       ),
                     ),
                   )
