@@ -53,6 +53,7 @@ class _listInterfaceState extends State<listInterface> {
     return Scaffold(
       appBar: AppBar(
           title: const Text('Univalle Domótica'),
+          foregroundColor: Color.fromARGB(255, 255, 255, 255),
           backgroundColor: const Color.fromARGB(228, 82, 2, 2),
           actions: <Widget>[
             IconButton(
