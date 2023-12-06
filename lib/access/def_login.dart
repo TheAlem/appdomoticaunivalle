@@ -88,7 +88,7 @@ class _LoginDefState extends State<LoginDef> {
         await SessionManager.saveLoginState(true);
 
         Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => const listInterface()));
+            MaterialPageRoute(builder: (context) => const ListInterface()));
       } else {
         Fluttertoast.showToast(
           msg: "Correo, contraseña o rol incorrectos",
@@ -168,148 +168,158 @@ class _LoginDefState extends State<LoginDef> {
               ),
             ),
             const SizedBox(height: 30),
-            Container(
-              margin: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(15),
-                child: Column(
-                  children: <Widget>[
-                    const SizedBox(height: 40),
-                    FadeAnimation(
-                      1.5,
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color.fromRGBO(225, 95, 27, .3),
-                              blurRadius: 20,
-                              offset: Offset(0, 10),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: Column(
+                      children: <Widget>[
+                        const SizedBox(height: 40),
+                        FadeAnimation(
+                          1.5,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color.fromRGBO(225, 95, 27, .3),
+                                  blurRadius: 20,
+                                  offset: Offset(0, 10),
+                                ),
+                              ],
                             ),
-                          ],
+                            child: Column(
+                              children: <Widget>[
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: const BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(color: Colors.grey), 
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _correoController,
+                                    decoration: const InputDecoration(
+                                      hintText: "Correo",
+                                      hintStyle: TextStyle(color: Colors.grey),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: const BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(color: Colors.grey),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _contrasenaController,
+                                    obscureText: true,
+                                    decoration: const InputDecoration(
+                                      hintText: "Contraseña",
+                                      hintStyle: TextStyle(color: Colors.grey),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  child: DropdownButtonFormField<String>(
+                                    hint: const Text('Seleccione su rol'),
+                                    value: _role,
+                                    items: _rolesValidos.map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _role = value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        child: Column(
-                          children: <Widget>[
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: const BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(color: Colors.grey),
+                        const SizedBox(height: 15),
+                        FadeAnimation(
+                          1.5,
+                          Container(
+                            height: 50,
+                            width: 200,
+                            margin: const EdgeInsets.symmetric(horizontal: 50),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(50),
+                              color: Color.fromRGBO(225, 0, 2, 1),
+                            ),
+                            child: ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all(
+                                    Colors.transparent),
+                                shadowColor: MaterialStateProperty.all(
+                                    Colors.transparent),
+                                shape: MaterialStateProperty.all(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50),
+                                  ),
                                 ),
                               ),
-                              child: TextField(
-                                controller: _correoController,
-                                decoration: const InputDecoration(
-                                  hintText: "Correo",
-                                  hintStyle: TextStyle(color: Colors.grey),
-                                  border: InputBorder.none,
-                                ),
+                              onPressed: _tryLogin,
+                              child: const Text(
+                                "Iniciar Sesion",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              child: TextField(
-                                controller: _contrasenaController,
-                                obscureText: true,
-                                decoration: const InputDecoration(
-                                  hintText: "Contraseña",
-                                  hintStyle: TextStyle(color: Colors.grey),
-                                  border: InputBorder.none,
-                                ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        FadeAnimation(
+                          1.5,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                "¿Deseas registrarte?",
+                                style: TextStyle(color: Colors.grey),
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              child: DropdownButtonFormField<String>(
-                                hint: const Text('Seleccione su rol'),
-                                value: _role,
-                                items: _rolesValidos.map((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
+                              const SizedBox(width: 5),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const registerdef()),
                                   );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _role = value;
-                                  });
                                 },
+                                child: const Text(
+                                  "Regístrate",
+                                  style: TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    FadeAnimation(
-                      1.5,
-                      Container(
-                        height: 50,
-                        width: 200,
-                        margin: const EdgeInsets.symmetric(horizontal: 50),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                              50), // Aquí está la corrección
-                          color: Color.fromRGBO(225, 0, 2, 1),
-                        ),
-                        child: ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor:
-                                MaterialStateProperty.all(Colors.transparent),
-                            shadowColor:
-                                MaterialStateProperty.all(Colors.transparent),
-                            shape: MaterialStateProperty.all(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                            ),
-                          ),
-                          onPressed: _tryLogin,
-                          child: const Text(
-                            "Iniciar Sesion",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+                            ],
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    FadeAnimation(
-                      1.5,
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "¿Deseas registrarte?",
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          const SizedBox(width: 5),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const registerdef()),
-                              );
-                            },
-                            child: const Text(
-                              "Regístrate",
-                              style: TextStyle(
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
               ),
             ),

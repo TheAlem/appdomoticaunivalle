@@ -1,33 +1,23 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:appdomotica/mqtt/mqtt_manager.dart';
 
 class PersianasPage extends StatefulWidget {
+  const PersianasPage({super.key});
+
   @override
   _PersianasPageState createState() => _PersianasPageState();
 }
 
-class _PersianasPageState extends State<PersianasPage>
-    with SingleTickerProviderStateMixin {
-  double persianasSpeed = 0; // Valor inicial para la velocidad de las persianas
+class _PersianasPageState extends State<PersianasPage> {
+  bool isPersianasOpen = false; // Estado de las persianas
   List<HistorialItem> historial = [];
   MQTTManager? mqttManager;
-  bool isConnected = false;
-  late AnimationController _animationController;
-  late Animation<double> _iconAnimation;
+  bool isConnected = false; // Estado de la conexión MQTT
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 500),
-    );
-    _iconAnimation =
-        Tween<double>(begin: 50.0, end: 100.0).animate(_animationController);
-
     mqttManager = MQTTManager('jose_univalle/persianas');
     mqttManager?.connect().then((_) {
       setState(() {
@@ -41,17 +31,14 @@ class _PersianasPageState extends State<PersianasPage>
     });
   }
 
-  void updatePersianasSpeed(double speed) {
-    int convertedSpeed = ((speed - 0.5) * 510).toInt();
-    convertedSpeed = max(-255, min(255, convertedSpeed));
-
+  void togglePersianas() {
     setState(() {
-      persianasSpeed = speed;
+      isPersianasOpen = !isPersianasOpen;
       historial.insert(
         0,
         HistorialItem(
           dateTime: DateTime.now(),
-          estado: 'Velocidad: $convertedSpeed',
+          estado: isPersianasOpen ? 'Abierto' : 'Cerrado',
           nombre: 'Usuario',
           rol: 'Residente',
         ),
@@ -61,9 +48,7 @@ class _PersianasPageState extends State<PersianasPage>
       }
     });
 
-    _animationController.animateTo(speed);
-
-    String mensaje = convertedSpeed.toString();
+    String mensaje = isPersianasOpen ? "1" : "0";
     if (mqttManager?.isConnected() == true) {
       mqttManager?.publish(mensaje);
     } else {
@@ -86,12 +71,11 @@ class _PersianasPageState extends State<PersianasPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            buildTopBar(context),
-            SizedBox(height: 20), // Espacio ajustado
-            buildPersianasAnimation(),
-            SizedBox(height: 20), // Espacio ajustado
-            buildPersianasSpeedSlider(),
-            buildSpeedText(),
+            buildTopBar(),
+          const  SizedBox(height: 40),
+            buildPersianasControl(),
+          const  SizedBox(height: 20),
+            buildPersianasStateText(),
             buildHistorialList(),
           ],
         ),
@@ -99,32 +83,14 @@ class _PersianasPageState extends State<PersianasPage>
     );
   }
 
-  Widget buildPersianasAnimation() {
-    return AnimatedBuilder(
-      animation: _iconAnimation,
-      builder: (context, child) {
-        return Container(
-          height: 100, // Tamaño del contenedor ajustado
-          width: 100, // Tamaño del contenedor ajustado
-          child: Center(
-            child: Icon(
-              Icons.vertical_align_center,
-              size: _iconAnimation.value, // Tamaño del icono animado
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget buildTopBar(BuildContext context) {
+  Widget buildTopBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back, size: 24.0),
+            icon: const Icon(Icons.arrow_back, size: 24.0),
             onPressed: () => Navigator.of(context).pop(),
           ),
           const Spacer(),
@@ -142,24 +108,25 @@ class _PersianasPageState extends State<PersianasPage>
     );
   }
 
-  Widget buildPersianasSpeedSlider() {
-    return Slider(
-      value: persianasSpeed,
-      onChanged: (newSpeed) => updatePersianasSpeed(newSpeed),
-      min: 0,
-      max: 1,
-      divisions: 100,
-      label: '${(persianasSpeed * 100).toInt()}%',
-      activeColor: Color.fromARGB(255, 153, 24, 24),
-      inactiveColor: Color.fromARGB(83, 133, 37, 37),
-      thumbColor: Color.fromARGB(255, 153, 24, 24),
+  Widget buildPersianasControl() {
+    return GestureDetector(
+      onTap: togglePersianas,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: Icon(
+          isPersianasOpen ? Icons.vertical_align_center : Icons.horizontal_rule,
+          color: isPersianasOpen ? Colors.green : Colors.red,
+          size: 80,
+          key: ValueKey<bool>(isPersianasOpen),
+        ),
+      ),
     );
   }
 
-  Widget buildSpeedText() {
+  Widget buildPersianasStateText() {
     return Text(
-      'Velocidad: ${(persianasSpeed * 100).toInt()}%',
-      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      isPersianasOpen ? 'Abierto' : 'Cerrado',
+      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
     );
   }
 

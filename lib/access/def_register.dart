@@ -134,7 +134,7 @@ class _RegisterDefState extends State<registerdef> {
                 margin: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(10),
@@ -149,7 +149,7 @@ class _RegisterDefState extends State<registerdef> {
                             Container(
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
+                                borderRadius: BorderRadius.circular(15),
                                 boxShadow: const [
                                   BoxShadow(
                                     color: Color.fromRGBO(225, 95, 27, .3),
@@ -316,27 +316,38 @@ class _RegisterDefState extends State<registerdef> {
     );
   }
 
-  Widget _buildDropdownField(
+Widget _buildDropdownField(
       String label, List<String> items, String? Function(String?)? validator) {
-    return DropdownButtonFormField<String>(
-      value: _role,
-      decoration: const InputDecoration(
-        labelText: "Rol",
-        errorStyle: TextStyle(fontSize: 14),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey),
+        ),
       ),
-      hint: Text(label),
-      onChanged: (newValue) {
-        setState(() {
-          _role = newValue;
-        });
-      },
-      validator: validator,
-      items: items.map((item) {
-        return DropdownMenuItem(
-          child: Text(item),
-          value: item,
-        );
-      }).toList(),
+      child: DropdownButtonFormField<String>(
+        value: _role,
+        decoration: const InputDecoration(
+          labelText: "Rol",
+          errorStyle: TextStyle(fontSize: 14),
+          border: InputBorder.none, // Remover el borde por defecto
+          contentPadding: EdgeInsets.only(
+              top: 0, bottom: 0, left: 5, right: 5), // Ajustar el relleno
+        ),
+        hint: Text(label),
+        onChanged: (newValue) {
+          setState(() {
+            _role = newValue;
+          });
+        },
+        validator: validator,
+        items: items.map((item) {
+          return DropdownMenuItem(
+            child: Text(item),
+            value: item,
+          );
+        }).toList(),
+      ),
     );
   }
 }

@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: isLoggedIn
-          ? const listInterface()
+          ? const ListInterface()
           : const LoginDef(), // Usar la variable no constante aquí
     );
   }

@@ -36,7 +36,7 @@ class _VentanasPageState extends State<VentanasPage> {
         0,
         HistorialItem(
           dateTime: DateTime.now(),
-          estado: isSwitchedOn ? 'Desbloqueadox' : 'Bloqueado',
+          estado: isSwitchedOn ? 'Desbloqueado' : 'Bloqueado',
           nombre: 'Juan Perez',
           rol: 'Administrador',
         ),
