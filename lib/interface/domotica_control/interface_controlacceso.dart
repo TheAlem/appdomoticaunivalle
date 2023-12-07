@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:appdomotica/mqtt/mqtt_manager.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AccesoPage extends StatefulWidget {
   @override
@@ -22,6 +24,7 @@ class _AccesoPageState extends State<AccesoPage> {
       setState(() {
         isConnected = true;
       });
+      fetchHistorial();
     }).catchError((_) {
       setState(() {
         isConnected = false;
@@ -29,29 +32,44 @@ class _AccesoPageState extends State<AccesoPage> {
     });
   }
 
-  void toggleSwitch() {
+  void toggleSwitch() async {
+    String mensaje = isSwitchedOn ? "0" : "1";
     setState(() {
       isSwitchedOn = !isSwitchedOn;
-      historial.insert(
-        0,
-        HistorialItem(
-          dateTime: DateTime.now(),
-          estado: isSwitchedOn ? 'Desbloqueado' : 'Bloqueado',
-          nombre: 'Juan Perez',
-          rol: 'Administrador',
-        ),
-      );
-      if (historial.length > 8) {
-        historial = historial.sublist(0, 8);
-      }
     });
 
-    String mensaje = isSwitchedOn ? "1" : "0";
     if (mqttManager?.isConnected() == true) {
       mqttManager?.publish(mensaje);
+      await fetchHistorial(); // Actualizar el historial después de cambiar el estado
     } else {
       print(
           "El cliente MQTT no está conectado. No se puede enviar el mensaje.");
+    }
+  }
+
+  Future<void> fetchHistorial() async {
+    try {
+      final response = await http
+          .get(Uri.parse('http://144.22.36.59:8000/historial/puerta'));
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body)['data'];
+        List<HistorialItem> fetchedItems =
+            data.map((item) => HistorialItem.fromJson(item)).toList();
+
+        fetchedItems.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+        if (fetchedItems.length > 6) {
+          fetchedItems = fetchedItems.take(6).toList();
+        }
+
+        setState(() {
+          historial = fetchedItems;
+        });
+      } else {
+        print(
+            'Error al cargar el historial: Código de estado ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error al cargar el historial: $e');
     }
   }
 
@@ -134,32 +152,55 @@ class _AccesoPageState extends State<AccesoPage> {
       child: ListView.builder(
         itemCount: historial.length,
         itemBuilder: (context, index) {
+          bool isClosed = historial[index].estado == "1";
           return ListTile(
             leading: Icon(
-              Icons.history,
-              color: Theme.of(context).primaryColor,
+              isClosed ? Icons.lock : Icons.lock_open,
+              color: isClosed ? Colors.red : Colors.green,
             ),
-            title: Text(historial[index].nombre),
+            title: Text(
+              DateFormat('EEEE, d MMMM yyyy, h:mm a')
+                  .format(historial[index].dateTime),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
             subtitle: Text(
-              '${DateFormat('dd/MM/yyyy HH:mm').format(historial[index].dateTime)} - ${historial[index].estado}',
+              'Estado: ${isClosed ? "Cerrado" : "Abierto"}',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
             ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           );
         },
       ),
     );
   }
+  
 }
 
 class HistorialItem {
   final DateTime dateTime;
   final String estado;
-  final String nombre;
-  final String rol;
 
   HistorialItem({
     required this.dateTime,
     required this.estado,
-    required this.nombre,
-    required this.rol,
   });
+
+  factory HistorialItem.fromJson(Map<String, dynamic> json) {
+    // Convertir la fecha y hora UTC a la zona horaria local de Bolivia (UTC-4)
+    DateTime fechaHoraUTC =
+        DateTime.parse(json['fecha_hora'] as String? ?? '2000-01-01T00:00:00Z');
+    DateTime fechaHoraLocal = fechaHoraUTC.subtract(const Duration(hours: 4));
+
+    return HistorialItem(
+      dateTime: fechaHoraLocal,
+      estado: json['valor'] as String? ?? 'Estado desconocido',
+    );
+  }
 }

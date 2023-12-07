@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:appdomotica/access/user_profile/user_details.dart';
 import 'package:appdomotica/access/user_profile/user_session.dart';
 
+
 class ListInterface extends StatefulWidget {
   const ListInterface({Key? key}) : super(key: key);
 
@@ -40,12 +41,13 @@ class _ListInterfaceState extends State<ListInterface> {
       'page': VentanasPage(),
     },
   ];
+  // Guardar correo
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Univalle Domótica'),
+        title: const Text('UniSmart'),
         foregroundColor: Colors.white,
         backgroundColor: const Color.fromARGB(228, 82, 2, 2),
         actions: <Widget>[

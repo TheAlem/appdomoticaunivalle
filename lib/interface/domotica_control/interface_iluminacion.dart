@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:appdomotica/mqtt/mqtt_manager.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class IluminacionPage extends StatefulWidget {
   @override
@@ -8,7 +10,7 @@ class IluminacionPage extends StatefulWidget {
 }
 
 class _IluminacionPageState extends State<IluminacionPage>
-    with SingleTickerProviderStateMixin {
+  with SingleTickerProviderStateMixin {
   double lightIntensity = 0;
   List<HistorialItem> historial = [];
   MQTTManager? mqttManager;
@@ -23,11 +25,10 @@ class _IluminacionPageState extends State<IluminacionPage>
     mqttManager = MQTTManager('jose_univalle/prueba');
     mqttManager?.connect().then((_) {
       mqttManager?.subscribe();
-      handleMqttConnected(); // Llamar cuando se conecte
-    }).catchError((error) {
-        handleMqttDisconnected(); // Llamar en caso de error
+      handleMqttConnected();
+    }).catchError((_) {
+      handleMqttDisconnected();
     });
-  
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -37,18 +38,14 @@ class _IluminacionPageState extends State<IluminacionPage>
     _colorAnimation = ColorTween(
       begin: Colors.grey,
       end: Colors.yellow,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOutQuad, // Suavizado de la animación
-    ));
+    ).animate(_animationController);
 
     _sizeAnimation = Tween<double>(
       begin: 40.0,
       end: 90.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticInOut, // Efecto elástico
-    ));
+    ).animate(_animationController);
+
+    fetchHistorial();
   }
 
   void handleMqttConnected() {
@@ -63,32 +60,64 @@ class _IluminacionPageState extends State<IluminacionPage>
     });
   }
 
-  void updateLightIntensity(double intensity) {
-    int brightness = (intensity * 255).toInt(); // Convierte de 0 a 1 a 0 a 255
+  void updateLightIntensity(double intensity, {bool updateHistorial = false}) {
+    int brightness = (intensity * 255).toInt();
     setState(() {
       lightIntensity = intensity;
+    });
+
+    _animationController.animateTo(lightIntensity);
+
+    String mensaje = brightness.toString();
+    if (isConnected) {
+      mqttManager?.publish(mensaje);
+      if (updateHistorial || intensity == 0 || intensity == 1.0) {
+        addToHistorial();
+      }
+    } else {
+      print(
+          "El cliente MQTT no está conectado. No se puede enviar el mensaje.");
+    }
+  }
+
+  void addToHistorial() {
+    setState(() {
       historial.insert(
         0,
         HistorialItem(
           dateTime: DateTime.now(),
           estado: '${(lightIntensity * 100).toInt()}% de Intensidad',
-          nombre: 'Juan Perez',
-          rol: 'Docente',
         ),
       );
       if (historial.length > 7) {
         historial = historial.sublist(0, 7);
       }
     });
+  }
 
-    _animationController.animateTo(lightIntensity);
+  Future<void> fetchHistorial() async {
+    try {
+      final response = await http
+          .get(Uri.parse('http://144.22.36.59:8000/historial/prueba'));
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body)['data'];
+        List<HistorialItem> fetchedItems =
+            data.map((item) => HistorialItem.fromJson(item)).toList();
 
-    String mensaje = brightness.toString(); // Enviar el valor entero
-    if (isConnected) {
-      mqttManager?.publish(mensaje);
-    } else {
-      print(
-          "El cliente MQTT no está conectado. No se puede enviar el mensaje.");
+        fetchedItems.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+        if (fetchedItems.length > 7) {
+          fetchedItems = fetchedItems.take(7).toList();
+        }
+
+        setState(() {
+          historial = fetchedItems;
+        });
+      } else {
+        print(
+            'Error al cargar el historial: Código de estado ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error al cargar el historial: $e');
     }
   }
 
@@ -99,6 +128,7 @@ class _IluminacionPageState extends State<IluminacionPage>
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,11 +138,11 @@ class _IluminacionPageState extends State<IluminacionPage>
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             buildTopBar(context),
-            SizedBox(height: 40),
+          const  SizedBox(height: 40),
             buildLightBulbIcon(),
             buildLightIntensitySlider(),
             buildIntensityText(),
-            buildHistoryList(),
+            buildHistorialList(),
           ],
         ),
       ),
@@ -151,10 +181,25 @@ class _IluminacionPageState extends State<IluminacionPage>
       child: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
-          return Icon(
-            Icons.lightbulb_outline,
-            color: _colorAnimation.value,
-            size: _sizeAnimation.value,
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              // Agrega una sombra que cambia basada en la intensidad de la luz
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.yellow.withOpacity(
+                      0.1 * lightIntensity), // Opacidad basada en la intensidad
+                  blurRadius:
+                      10.0 + (20.0 * lightIntensity), // Radio de difuminado
+                  spreadRadius:
+                      5.0 + (10.0 * lightIntensity), // Propagación de la sombra
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.lightbulb_outline,
+              color: _colorAnimation.value,
+              size: _sizeAnimation.value,
+            ),
           );
         },
       ),
@@ -165,6 +210,8 @@ class _IluminacionPageState extends State<IluminacionPage>
     return Slider(
       value: lightIntensity,
       onChanged: (newIntensity) => updateLightIntensity(newIntensity),
+      onChangeEnd: (newIntensity) =>
+          updateLightIntensity(newIntensity, updateHistorial: true),
       min: 0,
       max: 1,
       divisions: 100,
@@ -182,34 +229,55 @@ class _IluminacionPageState extends State<IluminacionPage>
     );
   }
 
-  Widget buildHistoryList() {
+  Widget buildHistorialList() {
     return Expanded(
       child: ListView.builder(
         itemCount: historial.length,
         itemBuilder: (context, index) {
+          // Determina si la intensidad es 0% para cambiar el color del icono
+          bool isZeroIntensity = historial[index].estado.startsWith('0%');
           return ListTile(
-            leading: Icon(Icons.history, color: Theme.of(context).primaryColor),
-            title: Text(historial[index].nombre),
+            leading: Icon(
+              Icons.lightbulb_outline,
+              color: isZeroIntensity
+                  ? Colors.grey
+                  : Colors.yellow, // Color gris si la intensidad es 0%
+            ),
+            title: Text(
+              DateFormat('EEEE, d MMMM yyyy, h:mm a')
+                  .format(historial[index].dateTime),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             subtitle: Text(
-              '${DateFormat('dd/MM/yyyy HH:mm').format(historial[index].dateTime)} - ${historial[index].estado}',
+              'Intensidad: ${historial[index].estado}',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           );
         },
       ),
     );
   }
+
+
 }
 
-class HistorialItem {
+  class HistorialItem {
   final DateTime dateTime;
   final String estado;
-  final String nombre;
-  final String rol;
 
   HistorialItem({
     required this.dateTime,
     required this.estado,
-    required this.nombre,
-    required this.rol,
   });
+
+  factory HistorialItem.fromJson(Map<String, dynamic> json) {
+    DateTime fechaHoraUTC =
+        DateTime.parse(json['fecha_hora'] as String? ?? '2000-01-01T00:00:00Z');
+    DateTime fechaHoraLocal = fechaHoraUTC.subtract(const Duration(hours: 4));
+
+    return HistorialItem(
+      dateTime: fechaHoraLocal,
+      estado: json['valor'] as String? ?? 'Estado desconocido',
+    );
+  }
 }
